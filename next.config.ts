@@ -1,12 +1,17 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+const repo = "portfolio"; // your GitHub repo name exactly
+
 const nextConfig: NextConfig = {
-  /* config options here */
-  // skip strict mode
   reactStrictMode: false,
+  output: "export",
+  images: { unoptimized: true },
+  basePath: isProd ? `/${repo}` : "",
+  assetPrefix: isProd ? `/${repo}/` : "",
   env: {
-    googleAnalyticsId: process.env.NODE_ENV === "production" ? process.env.GA_MEASUREMENT_ID : "",
-  }
+    googleAnalyticsId: isProd ? process.env.GA_MEASUREMENT_ID : "",
+  },
 };
 
 export default nextConfig;

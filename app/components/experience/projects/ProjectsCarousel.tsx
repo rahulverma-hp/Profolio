@@ -28,8 +28,12 @@ const ProjectsCarousel = () => {
       const angle =
         count === 1 ? Math.PI / 2 : (fov / count) * i;
       const z = -distance * Math.sin(angle);
-      const x = -distance * Math.cos(angle);
+      let x = -distance * Math.cos(angle);
       const rotY = Math.PI / 2 - angle;
+
+      if (project.title === "Product Scanner") {
+        x -= 1.5;
+      }
 
       return (
         <ProjectTile

@@ -35,11 +35,17 @@ const ProjectTile = ({ project, index, position, rotation, activeId, onClick }: 
     anchorY: "top",
   }), []);
 
+  const links = useMemo(() => {
+    if (project.urls?.length) return project.urls;
+    if (project.url) return [{ text: "VIEW ↗", url: project.url }];
+    return [];
+  }, [project.url, project.urls]);
+
   useEffect(() => {
     if (!projectRef.current) return;
     hoverAnimRef.current?.kill();
 
-    const [mesh, title, dateGroup, textBox, button] = projectRef.current.children;
+    const [mesh, title, textBox, buttonsGroup] = projectRef.current.children;
 
     hoverAnimRef.current = gsap.timeline();
     hoverAnimRef.current
@@ -54,17 +60,16 @@ const ProjectTile = ({ project, index, position, rotation, activeId, onClick }: 
       .to(textBox.position, { y: hovered ? 0.7 : 0 }, 0)
       // .to(textBox.scale, { y: hovered ? 1 : 0, x: hovered ? 1 : 0 }, 0)
       .to(textBox, { fillOpacity: hovered ? 1 : 0, duration: 0.4 }, 0)
-      .to(dateGroup.position, { y: hovered ? 2.6 : 1.4 }, 0)
       .to(mesh.scale, { y: hovered ? 2 : 1 }, 0)
       .to((mesh as THREE.Mesh).material, { opacity: hovered ? 0.95 : 0.3 }, 0)
       .to(mesh.position, { y: hovered ? 1 : 0 }, 0);
 
-    if (project.url) {
+    if (links.length) {
       hoverAnimRef.current
-        .to(button.scale, { y: hovered ? 1 : 0, x: hovered ? 1 : 0 }, 0)
-        .to(button.position, { z: hovered ? 0.3 : -1 }, 0);
+        .to((buttonsGroup as THREE.Group).scale, { y: hovered ? 1 : 0, x: hovered ? 1 : 0 }, 0)
+        .to((buttonsGroup as THREE.Group).position, { z: hovered ? 0.3 : -1 }, 0);
     }
-  }, [hovered]);
+  }, [hovered, links.length]);
 
   useEffect(() => {
     if (isMobile) {
@@ -82,13 +87,12 @@ const ProjectTile = ({ project, index, position, rotation, activeId, onClick }: 
     }
   }, [isProjectSectionActive]);
 
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+  const handleClick = (url: string) => (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    if (!project.url) return;
     const button = e.eventObject;
     gsap.to(button.position, { z: 0, duration: 0.1 })
       .then(() => gsap.to(button.position, { z: 0.3, duration: 0.3 }));
-    setTimeout(() => window.open(project.url, '_blank'), 50);
+    setTimeout(() => window.open(url, "_blank"), 50);
   };
 
   return (
@@ -114,19 +118,6 @@ const ProjectTile = ({ project, index, position, rotation, activeId, onClick }: 
           fontSize={0.8}>
           {project.title}
         </Text>
-        <group position={[-1.25, 1.4, 0.01]}>
-          <mesh>
-            <planeGeometry args={[1.7, 0.4, 1]} />
-            <meshBasicMaterial color="#777" opacity={0} wireframe />
-            <Edges color="black" lineWidth={1} />
-          </mesh>
-          <Text
-            {...subtitleProps}
-            position={[-0.7, 0.2, 0]}
-            fontSize={0.3}>
-            {project.date.toUpperCase()}
-          </Text>
-        </group>
         <Text
           {...subtitleProps}
           maxWidth={3.8}
@@ -135,25 +126,31 @@ const ProjectTile = ({ project, index, position, rotation, activeId, onClick }: 
           fontSize={0.2}>
           {project.subtext}
         </Text>
-        {project.url && (
+        {links.length > 0 && (
           <group
             position={[1.3, -0.6, -1]}
             scale={[0, 0, 1]}
-            onClick={handleClick}
-            onPointerOver={() => document.body.style.cursor = 'pointer'}
-            onPointerOut={() => document.body.style.cursor = 'auto'}>
-            <mesh>
-              <boxGeometry args={[1.1, 0.4, 0.2]} />
-              <meshBasicMaterial color="#222" />
-              <Edges color="white" lineWidth={1} />
-            </mesh>
-            <Text
-              {...subtitleProps}
-              color="white"
-              position={[-0.4, 0.15, 0.2]}
-              fontSize={0.25}>
-              VIEW ↗
-            </Text>
+            onPointerOver={() => (document.body.style.cursor = "pointer")}
+            onPointerOut={() => (document.body.style.cursor = "auto")}>
+            {links.slice(0, 2).map((link, i) => (
+              <group
+                key={`${link.url}-${i}`}
+                position={[0, i === 0 ? 0 : -0.55, 0]}
+                onClick={handleClick(link.url)}>
+                <mesh>
+                  <boxGeometry args={[1.7, 0.4, 0.2]} />
+                  <meshBasicMaterial color="#222" />
+                  <Edges color="white" lineWidth={1} />
+                </mesh>
+                <Text
+                  {...subtitleProps}
+                  color="white"
+                  position={[-0.75, 0.15, 0.2]}
+                  fontSize={0.22}>
+                  {link.text}
+                </Text>
+              </group>
+            ))}
           </group>
         )}
       </group>
